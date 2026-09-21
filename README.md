@@ -13,8 +13,11 @@ Orchestrator roles, and (later) stack layers.
 | Windows | `C:\DevEnv\claude-core` |
 | Linux | `~/DevEnv/claude-core` |
 
-Each machine's user-level Claude file loads `BASELINE.md` from its own path:
-Windows `%USERPROFILE%\.claude\CLAUDE.md`, Linux `~/.claude/CLAUDE.md`.
+Each machine's user-level Claude file loads `BASELINE.md` via the same
+`@~/DevEnv/claude-core/BASELINE.md` import: Windows `%USERPROFILE%\.claude\CLAUDE.md`,
+Linux `~/.claude/CLAUDE.md`. On Windows this needs a junction
+(`mklink /J %USERPROFILE%\DevEnv C:\DevEnv`); absolute `C:\` paths do not resolve
+in `@` imports. See `docs/classification-additions.md`.
 
 ## Working on two machines
 Git is the sync. Run `git pull` at the start of every session and `git push`

@@ -36,10 +36,29 @@ load there. A user-level file loads for every project regardless of location.
 | Linux | `~/.claude/CLAUDE.md` | created and tested 2026-09-21 |
 | Windows | `%USERPROFILE%\.claude\CLAUDE.md` | NOT yet created; create after the real `BASELINE.md` is written |
 
-Windows loader text:
+Windows loader text (identical to Linux; needs the junction below):
 ```
-claude-core baseline: C:\DevEnv\claude-core\BASELINE.md
-@C:\DevEnv\claude-core\BASELINE.md
+claude-core baseline: ~/DevEnv/claude-core/BASELINE.md
+@~/DevEnv/claude-core/BASELINE.md
 ```
-When the real baseline is done, also remove the `C:\DevEnv\CLAUDE.md` step from
-the "How to apply" in the memory file; it is no longer needed.
+
+### Windows import finding (2026-09-21, Claude Code 2.1.278 on both machines)
+Tested with a unique marker string quoted back by the model:
+
+| Import form (from `%USERPROFILE%\.claude\CLAUDE.md`) | Resolves |
+|---|---|
+| `@dummy.md` (same directory) | yes |
+| `@subdir/x.md` (one level down) | yes |
+| `@~/DevEnv/claude-core/BASELINE.md` (via junction) | yes |
+| `@C:\DevEnv\claude-core\BASELINE.md` | NO |
+| `@C:/DevEnv/claude-core/BASELINE.md` | NO |
+| `@../dummy.md` | NO |
+
+So absolute drive-letter paths and `../` do not resolve; `~`-relative paths do.
+`C:\DevEnv` is outside the home directory, so Windows needs a directory
+junction (no admin required) to make it reachable via `~`:
+```
+mklink /J %USERPROFILE%\DevEnv C:\DevEnv
+```
+The junction must exist on Windows for the loader to work. Linux needs nothing:
+`~/DevEnv` is the real directory.
