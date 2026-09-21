@@ -21,3 +21,25 @@ folded into that classification when the real `BASELINE.md` is written.
 The user-level loader (`~/.claude/CLAUDE.md` with an `@` import of
 `BASELINE.md`) was tested on 2026-09-21: a fresh headless session in an empty
 folder loaded all rules and both roles from the baseline.
+
+## Decision: loader location (2026-09-21)
+The loader is a **user-level** CLAUDE.md on each machine, not a parent-directory
+`C:\DevEnv\CLAUDE.md`. This supersedes the "Location" design decision in
+`docs/memory/project_claude_core_baseline.md`.
+
+Why: a parent-directory file only loads for projects under that directory. On
+Linux the projects live in `~/AIProjects/`, not `~/DevEnv/`, so it would never
+load there. A user-level file loads for every project regardless of location.
+
+| Machine | Loader file | Contents |
+|---|---|---|
+| Linux | `~/.claude/CLAUDE.md` | created and tested 2026-09-21 |
+| Windows | `%USERPROFILE%\.claude\CLAUDE.md` | NOT yet created; create after the real `BASELINE.md` is written |
+
+Windows loader text:
+```
+claude-core baseline: C:\DevEnv\claude-core\BASELINE.md
+@C:\DevEnv\claude-core\BASELINE.md
+```
+When the real baseline is done, also remove the `C:\DevEnv\CLAUDE.md` step from
+the "How to apply" in the memory file; it is no longer needed.
