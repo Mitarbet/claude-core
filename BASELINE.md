@@ -25,9 +25,17 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
 
 ### Git safety
 
+These rules apply when more than one terminal is active in a project (see
+Working-tree topology). In a single-terminal session, skip
+git-identity-per-terminal, non-prime-fetch-on-prompt, no-parallel-commits,
+pre-rebase-discipline and session-open-inherited-mods; the rest still apply.
+The default branch is whatever the repo uses (`main`, `master`); substitute it
+for `<default-branch>` below.
+
 - **git-identity-per-terminal**: every terminal sets `git config user.name
   "<Terminal>"` at session open (role name, not a human name or lowercase
-  string) and uses the per-command override on every commit and amend —
+  string; a project's CLAUDE.md may override this, for example to use one
+  human author) and uses the per-command override on every commit and amend —
   `git -c user.name="<Terminal>" commit <path> -m "..."` — rather than relying
   on `.git/config`, which is shared and can be overwritten by a sibling
   terminal between your last check and your commit. Verify `git config
@@ -38,7 +46,7 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
 - **non-prime-fetch-on-prompt**: every non-Prime terminal runs `git fetch
   origin` as the first command of every new prompt — before any read, write,
   or commit — and logs the output even when empty. Run it a second time,
-  plus `git log origin/main..HEAD --oneline`, immediately before any
+  plus `git log origin/<default-branch>..HEAD --oneline`, immediately before any
   destructive operation (`reset --hard`, `rebase`, `commit --amend`, `push
   --force`, `branch -D`). Prime is exempt from the per-prompt fetch (its
   fetch discipline is push-scoped — see prime-push-all-unpushed below) but
@@ -55,7 +63,7 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
   HEAD` matches the SHA you intend to amend — HEAD can move between when a
   target is named and when the amend runs.
 - **prime-push-all-unpushed**: before every push, Prime lists every commit
-  about to publish (`git log origin/main..HEAD --oneline` and `git
+  about to publish (`git log origin/<default-branch>..HEAD --oneline` and `git
   rev-list --count`), reports both plus an explicit "I have reviewed each
   commit; none are unexpected" to the orchestrator, and waits for approval
   naming the expected count *and* SHA list before running `git push`. No
@@ -64,7 +72,7 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
   never run `git push` — publishing every unpushed commit including ones
   Prime hasn't yet had reviewed defeats this entire discipline.
 - **pre-rebase-discipline**: before any rebase, fetch and pre-count the
-  unpushed stack (`git fetch origin` then `git log origin/main..HEAD
+  unpushed stack (`git fetch origin` then `git log origin/<default-branch>..HEAD
   --oneline`); if the count doesn't match what you expected, stop and
   report rather than rebasing anyway. Use an explicit SHA (`git rebase -i
   <sha>^`), never a moving `HEAD~N` reference, whenever another terminal may
@@ -74,7 +82,7 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
   uncommitted sibling work with no warning from git.
 - **session-open-inherited-mods**: at session open, and again at any prompt
   boundary after an idle gap (>1 prompt cycle during which siblings may have
-  acted), run `git status --short` and `git log origin/main..HEAD
+  acted), run `git status --short` and `git log origin/<default-branch>..HEAD
   --oneline` before accepting new work. If the tree is dirty with a
   modification you don't own, stash it with a tagged name (e.g.
   `{terminal}-inherited-hold-{context}`) and report the stash to the
@@ -89,6 +97,9 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
 
 ### WO / issue lifecycle
 
+- **wo-id-on-every-commit**: all work is tied to a WO, and every commit message
+  references its WO id. If work has no WO, register one before committing. A
+  project's own commit-format rule may define the exact format.
 - **wo-envelope-commit**: for any work order shipping more than ~3 commits,
   close it with a final envelope commit (`meta: WO-XXX envelope — <scope>`)
   listing the implementation commits it closes. Not a squash, not mandatory
@@ -136,10 +147,8 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
   survey step because "state is known"; do not draft the startup/handoff
   document directly without going through the close sweep; do not combine
   registry registration and the startup document into one commit — keep
-  them separate so each is independently auditable. (Compliance-platform's
-  own close procedure has many more project-specific steps — DB table
-  counts, ECS health, audit cadence gates — that stay in that project's
-  rules, not here.)
+  them separate so each is independently auditable. Project-specific close
+  steps stay in that project's own rules, not here.
 
 ### CI
 
@@ -149,7 +158,7 @@ terminal its own clone, its CLAUDE.md should say so explicitly.
   meta commit with it can suppress CI for build-relevant work stacked
   underneath if that work hasn't already been pushed and built. Before
   tagging any commit, confirm every commit in the unpushed stack is
-  docs/YAML-only (`git log origin/main..HEAD --oneline`, checked against
+  docs/YAML-only (`git log origin/<default-branch>..HEAD --oneline`, checked against
   the actual file changes — not assumed). When in doubt, omit the directive
   and let CI run; a redundant build is cheap, a missed deploy is not. Never
   write the literal directive string in explanatory prose (a commit
